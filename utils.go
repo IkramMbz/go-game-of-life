@@ -54,3 +54,9 @@ func (s *Slider) Update() {
 		}
 	}
 }
+
+// Ajuster les Tick par seconds pour faire varier la vitesse
+func adjustTPS(value float64) {
+	newTPS := 10 + int(value*70)
+	ebiten.SetTPS(newTPS)
+}

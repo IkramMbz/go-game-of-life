@@ -35,7 +35,7 @@ func main() {
 	windowHeight := height * cellSize + 60 // Ajouter 60 pixels pour la barre des statistiques
 
 	ebiten.SetWindowSize(windowWidth, windowHeight)
-	ebiten.SetWindowTitle("Game of Life")
+	ebiten.SetWindowTitle("Go Game of Life")
 
 	rand.Seed(time.Now().UnixNano())
 	game := NewGame()
@@ -45,14 +45,4 @@ func main() {
 	if err := ebiten.RunGame(game); err != nil {
 		fmt.Println("error:", err)
 	}
-}
-
-func adjustTPS(value float64) {
-	newTPS := 10 + int(value*30) // Ajuste le TPS entre 10 et 40
-	ebiten.SetTPS(newTPS)
-	fmt.Printf("Vitesse ajustée à: %d TPS\n", newTPS)
-}
-
-func getIndex(x, y, width int) int {
-	return y*width + x
 }
