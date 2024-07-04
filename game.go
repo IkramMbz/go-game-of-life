@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image/color"
 	"math/rand"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -104,6 +105,13 @@ func (g *Game) Update() error {
 	g.GenerationCount++
 	g.LivingCellsCount = countLivingCells(g.Grid)
 
+    // Generate a unique identifier for the game state
+    identifier := generateUniqueIdentifier()
+
+    err := g.SaveGame(identifier,"files/save.json")
+    if err != nil {
+      fmt.Println("Error saving game:", err)
+    }
 	return nil
 }
 
@@ -148,4 +156,10 @@ func countNeighbors(grid []bool, x, y int) int {
 		}
 	}
 	return count
+}
+
+func generateUniqueIdentifier() string {
+  // Generate a unique identifier using current timestamp
+  timestamp := time.Now().Format("2006-01-02T15-04-05")  // Adjust format if needed
+  return "game_" + timestamp
 }
