@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"image/color"
+	"math"
 	"math/rand"
 	"time"
 
@@ -16,6 +17,7 @@ var (
 	cellSize = 10  // Taille initiale de chaque cellule pour l'affichage
 	offsetX  = 0.0
 	offsetY  = 0.0
+	slider  *Slider
 )
 
 type Game struct {
@@ -43,8 +45,6 @@ func main() {
 		return
 	}
 
-
-
 	// Définir la taille de la fenêtre en fonction des dimensions de la grille et de la taille des cellules
 	windowWidth := width * cellSize
 	windowHeight := height * cellSize + 60 // Ajouter 60 pixels pour la barre des statistiques
@@ -54,6 +54,8 @@ func main() {
 
 	rand.Seed(time.Now().UnixNano())
 	game := NewGame()
+
+	slider = NewSlider(25, 25, adjustTPS)
 
 	if err := ebiten.RunGame(game); err != nil {
 		fmt.Println("error:", err)
@@ -105,6 +107,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	// Dessiner les statistiques sur la barre noire
 	stats := fmt.Sprintf("Génération: %d\nCellules vivantes: %d", g.GenerationCount, g.LivingCellsCount)
 	ebitenutil.DebugPrintAt(screen, stats, 10, statsBarY+20)
+
+	// Dessiner le slider
+	slider.Draw(screen)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -113,6 +118,8 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 }
 
 func (g *Game) Update() error {
+	slider.Update()
+
 	if ebiten.IsKeyPressed(ebiten.KeyArrowUp) {
 		offsetY += 10
 	}
@@ -131,4 +138,59 @@ func (g *Game) Update() error {
 
 func getIndex(x, y, width int) int {
 	return y*width + x
+}
+
+func adjustTPS(value float64) {
+	newTPS := 10 + int(value*30) // Ajuste le TPS entre 10 et 40
+	ebiten.SetTPS(newTPS)
+}
+
+func (s *Slider) Draw(screen *ebiten.Image) {
+	// Dessiner la barre du slider
+	barColor := color.RGBA{0x80, 0x80, 0x80, 0xff}
+	barRect := ebiten.NewImage(s.width, s.height)
+	barRect.Fill(barColor)
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(float64(s.x), float64(s.y))
+	screen.DrawImage(barRect, op)
+
+	// Dessiner le curseur du slider
+	cursorWidth := 10
+	cursorHeight := s.height + 10
+	cursorX := s.x + int(s.value*float64(s.width)) - cursorWidth/2
+	cursorY := s.y - (cursorHeight-s.height)/2
+	cursorColor := color.RGBA{0xff, 0x00, 0x00, 0xff}
+	cursorRect := ebiten.NewImage(cursorWidth, cursorHeight)
+	cursorRect.Fill(cursorColor)
+	op = &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(float64(cursorX), float64(cursorY))
+	screen.DrawImage(cursorRect, op)
+}
+
+func (s *Slider) Update() {
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+		mx, my := ebiten.CursorPosition()
+		if mx >= s.x && mx < s.x+s.width && my >= s.y && my < s.y+s.height {
+			s.value = math.Max(0, math.Min(1, float64(mx-s.x)/float64(s.width)))
+			s.onChange(s.value)
+		}
+	}
+}
+
+// Slider struct and related methods
+type Slider struct {
+	x, y, width, height int
+	value               float64
+	onChange            func(float64)
+}
+
+func NewSlider(x int, y int, onChange func(float64)) *Slider {
+	return &Slider{
+		x:        x,
+		y:        y,
+		width:    250,
+		height:   10,
+		value:    0.5, // Valeur initiale du slider au milieu
+		onChange: onChange,
+	}
 }
