@@ -14,24 +14,19 @@ var (
 	cellSize = 10  // Taille initiale de chaque cellule pour l'affichage
 	offsetX  = 0.0
 	offsetY  = 0.0
-	slider  *Slider
+	slider   *Slider
 )
 
 func main() {
 	// Demander à l'utilisateur d'entrer les dimensions de la grille
-	fmt.Print("Entrez la largeur de la grille: ")
+	fmt.Print("Entrez la taille de la grille (carré) : ")
 	fmt.Scan(&width)
-	fmt.Print("Entrez la hauteur de la grille: ")
-	fmt.Scan(&height)
 
-	//Vérifier les entrées de l'utilisateur
-	if height != width {
-		fmt.Println("Erreur de taille : la largeur et la hauteur doivent être égales.")
-		return
-	}
+	height = width
 
-	if height < 15 || height > 60 &&  width < 15 || width > 90 {
-		fmt.Println("Erreur de taille : la taille doit être inférieur à 90 ou supérieur à 15.")
+	// Vérifier les entrées de l'utilisateur
+	if width < 15 || width > 60 {
+		fmt.Println("Erreur de taille : la taille doit être comprise entre 15 et 60.")
 		return
 	}
 
@@ -50,4 +45,14 @@ func main() {
 	if err := ebiten.RunGame(game); err != nil {
 		fmt.Println("error:", err)
 	}
+}
+
+func adjustTPS(value float64) {
+	newTPS := 10 + int(value*30) // Ajuste le TPS entre 10 et 40
+	ebiten.SetTPS(newTPS)
+	fmt.Printf("Vitesse ajustée à: %d TPS\n", newTPS)
+}
+
+func getIndex(x, y, width int) int {
+	return y*width + x
 }

@@ -6,7 +6,6 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-// Slider struct and related methods
 type Slider struct {
 	x, y, width, height int
 	value               float64
@@ -18,8 +17,8 @@ func NewSlider(x int, y int, onChange func(float64)) *Slider {
 		x:        x,
 		y:        y,
 		width:    250,
-		height:   10,
-		value:    0.5, // Valeur initiale du slider au milieu = vitesse x1
+		height:   25,
+		value:    0.5, // Valeur initiale du slider au milieu
 		onChange: onChange,
 	}
 }
@@ -54,10 +53,4 @@ func (s *Slider) Update() {
 			s.onChange(s.value)
 		}
 	}
-}
-
-// Ajuster les Tick par seconds pour faire varier la vitesse
-func adjustTPS(value float64) {
-	newTPS := 10 + int(value*70)
-	ebiten.SetTPS(newTPS)
 }
