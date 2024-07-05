@@ -1,14 +1,18 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"image/color"
+	"io/ioutil"
 	"math/rand"
+	"os"
+	"path/filepath"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
-
 
 type Game struct {
 	Grid             []bool
@@ -118,6 +122,20 @@ func (g *Game) Update() error {
 	g.GenerationCount++
 	g.LivingCellsCount = countLivingCells(g.Grid)
 
+	// Sauvegarder le jeu avec la touche S
+	if ebiten.IsKeyPressed(ebiten.KeyS) {
+		if err := g.Save(); err != nil {
+			fmt.Println("Erreur de sauvegarde:", err)
+		}
+	}
+
+	// Charger le jeu avec la touche L
+	if ebiten.IsKeyPressed(ebiten.KeyL) {
+		if err := g.LoadLastSave(); err != nil {
+			fmt.Println("Erreur de chargement:", err)
+		}
+	}
+
 	return nil
 }
 
@@ -186,4 +204,51 @@ func countNeighbors(grid []bool, x, y int) int {
 		}
 	}
 	return count
+}
+
+func (g *Game) Save() error {
+	// Créer le répertoire de sauvegarde s'il n'existe pas
+	saveDir := "sauvegarde"
+	if err := os.MkdirAll(saveDir, 0755); err != nil {
+		return err
+	}
+
+	// Générer un nom de fichier unique basé sur le timestamp
+	filename := fmt.Sprintf("savegame_%d.json", time.Now().Unix())
+	filepath := filepath.Join(saveDir, filename)
+
+	// Sauvegarder l'état du jeu
+	data, err := json.Marshal(g)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(filepath, data, 0644)
+}
+
+func (g *Game) LoadLastSave() error {
+	// Lire le répertoire de sauvegarde pour obtenir la liste des fichiers
+	saveDir := "sauvegarde"
+	files, err := ioutil.ReadDir(saveDir)
+	if err != nil {
+		return err
+	}
+
+	// Trouver le fichier de sauvegarde le plus récent
+	var lastFile os.FileInfo
+	for _, file := range files {
+		if file.Mode().IsRegular() && (lastFile == nil || file.ModTime().After(lastFile.ModTime())) {
+			lastFile = file
+		}
+	}
+
+	// Charger l'état du jeu à partir du fichier le plus récent
+	if lastFile != nil {
+		filepath := filepath.Join(saveDir, lastFile.Name())
+		data, err := ioutil.ReadFile(filepath)
+		if err != nil {
+			return err
+		}
+		return json.Unmarshal(data, g)
+	}
+	return fmt.Errorf("aucun fichier de sauvegarde trouvé")
 }
